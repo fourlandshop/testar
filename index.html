@@ -1,92 +1,88 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html>
   <head>
-    <meta charset="UTF-8">
-    <title>AR ویدیو با صدا</title>
-
-    <!-- کتابخانه‌های MindAR و A-Frame -->
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.7/dist/mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.7/dist/aframe/mindar-image-aframe.prod.js"></script>
+    <meta charset="UTF-8" />
+    <title>AR Video Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- A-Frame -->
+    <script src="https://unpkg.com/aframe@1.4.2/dist/aframe.min.js"></script>
+    
+    <!-- MindAR -->
+    <script src="https://unpkg.com/mind-ar@1.1.7/dist/mindar-image-aframe.prod.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/mind-ar@1.1.7/dist/mindar-image-aframe.prod.css" />
 
     <style>
-      html, body {
+      body {
         margin: 0;
-        padding: 0;
-        height: 100%;
         overflow: hidden;
-        background-color: black;
-        font-family: "IRANSans", sans-serif;
       }
 
-      #play-btn {
+      #playButton {
         position: absolute;
-        top: 30px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        background: linear-gradient(135deg, #007bff, #00c6ff);
-        border: none;
+        transform: translate(-50%, -50%);
+        padding: 20px 40px;
+        font-size: 18px;
+        background-color: #00b894;
         color: white;
-        padding: 14px 28px;
-        font-size: 17px;
-        border-radius: 50px;
+        border: none;
+        border-radius: 10px;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
-        transition: background 0.3s ease;
-      }
-
-      #play-btn:hover {
-        background: linear-gradient(135deg, #0056b3, #00aaff);
-      }
-
-      #play-btn:active {
-        transform: translateX(-50%) scale(0.98);
+        z-index: 10;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       }
     </style>
   </head>
 
   <body>
-    <!-- دکمه حرفه‌ای پخش صدا -->
-    <button id="play-btn">▶ پخش ویدیو با صدا</button>
+    <!-- دکمه پخش ویدیو -->
+    <button id="playButton">پخش ویدیو</button>
 
     <!-- صحنه واقعیت افزوده -->
-    <a-scene
-      mindar-image="imageTargetSrc: targets.mind;"
-      embedded
-      color-space="sRGB"
-      renderer="precision: mediump; antialias: true;"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: true"
-    >
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false;" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: true" 
+             embedded>
+
       <a-assets>
-        <video id="video" src="video.mp4" loop crossorigin="anonymous" playsinline></video>
+        <video id="ar-video" src="video.mp4" preload="auto" crossorigin="anonymous" playsinline></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-video src="#video" width="1" height="0.5625" position="0 0 0"></a-video>
-      </a-entity>
+      <!-- هدف‌گذاری به تصویر -->
+      <a-image target="0" position="0 0 0" width="1" height="0.5625">
+        <a-video 
+          src="#ar-video" 
+          width="1" 
+          height="0.5625" 
+          position="0 0 0" 
+          rotation="0 0 0"
+          autoplay="false" 
+          loop="true">
+        </a-video>
+      </a-image>
+
     </a-scene>
 
-    <!-- اسکریپت فعال‌سازی صدای ویدیو -->
+    <!-- اسکریپت پخش -->
     <script>
-      const playBtn = document.getElementById('play-btn');
-      const video = document.getElementById('video');
+      const playButton = document.getElementById('playButton');
+      const video = document.getElementById('ar-video');
+      const scene = document.querySelector('a-scene');
 
-      // اگر قبلاً کلیک شده بود، دکمه رو نشون نده
-      if (localStorage.getItem('ar-video-played')) {
-        playBtn.style.display = 'none';
-      }
-
-      playBtn.addEventListener('click', () => {
-        video.muted = false;
-        video.play();
-        playBtn.style.display = 'none';
-
-        // ذخیره‌سازی در localStorage که دیگه نشون داده نشه
-        localStorage.setItem('ar-video-played', 'true');
+      playButton.addEventListener('click', async () => {
+        try {
+          await video.play();
+          playButton.style.display = 'none';
+          // بعد از شروع ویدیو، صحنه AR هم شروع بشه
+          scene.components["mindar-image"].start();
+        } catch (err) {
+          alert("پخش ویدیو یا فعال‌سازی دوربین ممکن نیست. لطفاً دسترسی را بررسی کنید.");
+          console.error(err);
+        }
       });
     </script>
   </body>
